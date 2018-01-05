@@ -1,4 +1,4 @@
-import {ADD_TODO, TOGGLE_TODO} from '../actions/type'
+import {ADD_TODO, TOGGLE_TODO, GET_STORAGE} from '../actions/type'
 
 const todos = (state = [], action) => {
     switch (action.type) {
@@ -14,6 +14,11 @@ const todos = (state = [], action) => {
         case TOGGLE_TODO:
             return state.map(todo => (todo.id === action.id) ? {...todo, completed: !todo.completed} : todo)
 
+        case GET_STORAGE:
+            return [
+                ...state,
+                ...action.storage
+            ]
         default:
             return state;
     }

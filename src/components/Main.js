@@ -3,10 +3,11 @@ import {
     View,
     Text,
     Button,
-    StyleSheet, TextInput, FlatList
+    StyleSheet, TextInput, FlatList,
+    AsyncStorage
 } from 'react-native'
 import {connect} from "react-redux";
-import {toggleTodo, addTodo} from "../actions";
+import {toggleTodo, addTodo, getStorage} from "../actions";
 
 class Main extends Component {
 
@@ -19,8 +20,47 @@ class Main extends Component {
     }
 
 
+    componentWillMount() {
+        console.log('Main componentWillMount........');
+        try {
+            AsyncStorage.getItem('data', (err, result) => {
+                if (result !== null) {
+                    console.log(result);
+                    this.props.getStorage(JSON.parse(result));
+                }
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    renderRow = ({item}) => {
+        return (item.completed) ?
+            (
+                <Text
+                    style={{color: 'green'}}
+                    onPress={() => {
+                        this.actionToggle(item.id);
+                    }}>
+                    {item.text} - Completed
+                </Text>
+            ) : (
+                <Text
+                    style={{color: 'red'}}
+                    onPress={() => {
+                        this.actionToggle(item.id);
+                    }}>
+                    {item.text} - Uncomplete
+                </Text>
+            )
+
+    }
+
     componentWillReceiveProps(nextProps) {
+        console.log('Main Component Will Receive Props ......');
+
         console.log(JSON.stringify(nextProps));
+        this.saveStorage(nextProps);
         this.setState({dataSource: nextProps.todos})
     }
 
@@ -29,37 +69,33 @@ class Main extends Component {
     }
 
     actionToggle(id) {
-        this.props.toggleTodo(id)
+        this.props.toggleTodo(id);
     }
 
     isCompleted = (todo) => {
         return todo.completed === true;
     }
 
+    saveStorage(nextProps) {
+        try {
+            AsyncStorage.setItem('data', JSON.stringify(nextProps.todos), (error, result) => {
 
-    renderRow = ({item}) => {
-        return (item.completed) ?
-        (
-            <Text
-                style={{color:'green'}}
-                onPress={() => {
-                    this.actionToggle(item.id);
-                }}>
-                {item.text} - Completed
-            </Text>
-        ) : (
-            <Text
-                style={{color:'red'}}
-                onPress={() => {
-                    this.actionToggle(item.id);
-                }}>
-                {item.text} - Uncomplete
-            </Text>
-        )
+                if (!error) {
+                    console.log('save successful: ' + JSON.stringify(result))
+                } else {
+                    console.log('save failure ' + error);
 
+                }
+            });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     render() {
+
+        console.log('Main render ............');
+
         return (
             <View style={styles.container}>
                 <Text>TODO LIST</Text>
@@ -99,7 +135,7 @@ class Main extends Component {
 
                 <View style={styles.line}/>
 
-                <Text style={{marginBottom:50, color:'grey', fontStyle:'italic'}}> Click to item</Text>
+                <Text style={{marginBottom: 50, color: 'grey', fontStyle: 'italic'}}> Click to item</Text>
                 <View>
 
                     <FlatList
@@ -123,6 +159,7 @@ const mapDispatchToProps = dispatch => {
     return {
         addTodo: (text) => dispatch(addTodo(text)),
         toggleTodo: id => dispatch(toggleTodo(id)),
+        getStorage: (storage) => dispatch(getStorage(storage))
     }
 }
 
@@ -140,7 +177,7 @@ const styles = StyleSheet.create({
         width: 200,
         borderWidth: 1,
         textAlign: 'center',
-        margin:10
+        margin: 10
     },
     layout_button: {
         margin: 10,
